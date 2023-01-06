@@ -16,6 +16,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <https://www.gnu.org/licenses/>. */
 
+#include <stdbool.h>
 #include <signal.h>
 
 #include <sys/ioctl.h>
@@ -66,6 +67,14 @@ int restore_tty() {
 }
 
 
+static volatile sig_atomic_t must_resize;
+
+/* What to do if the terminal window is resized. */
+void sigwinch_handler(int sig) {
+    must_resize = true;
+    signal(sig, sigwinch_handler);
+}
+
 #define RAND_DISP (rand() % 2 ? 1 : -1)
 
 /* Just start drawing the DVD logo endlessly.
@@ -73,13 +82,18 @@ int restore_tty() {
 int animate_logo(const char **logo, const int width, const int height,
                  const unsigned int delay) {
     struct winsize tty_size;
-    ioctl(STDIN_FILENO, TIOCGWINSZ, &tty_size);
-
+    signal(SIGWINCH, sigwinch_handler);
     int x = 2 + rand() % (tty_size.ws_col - width - 1),
         y = 2 + rand() % (tty_size.ws_row - height - 1),
         dispx = RAND_DISP, dispy = RAND_DISP;
-    for (; tty_size.ws_col > width && tty_size.ws_row > width;
-         x += dispx, y += dispy) {
+    for (must_resize = true;; x += dispx, y += dispy) {
+        if (must_resize) {
+            ioctl(STDIN_FILENO, TIOCGWINSZ, &tty_size);
+            if (tty_size.ws_col < width || tty_size.ws_row < height) {
+                return -1;
+            }
+            must_resize = false;
+        }
         printf(CLRSCR);
         for (int i = 0; i < height; ++i) {
             printf(MOVCUR(%d, %d) "%s", y + i, x, logo[i]);
@@ -93,6 +107,4 @@ int animate_logo(const char **logo, const int width, const int height,
             dispy = -dispy;
         }
     }
-
-    return -1;
 }

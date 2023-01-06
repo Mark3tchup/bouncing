@@ -44,7 +44,9 @@ int main() {
     if (animate_logo(logo, strlen(*logo),
                      sizeof(logo) / sizeof(*logo), 1) == -1) {
         printf(CHCUR(h) MOVCUR(1, 1) CLRSCR SWBUF(l));
+        fflush(stdout);
         fprintf(stderr, "Error: terminal size is too low.\n");
+        fflush(stderr);
         restore_tty();
     }
 
