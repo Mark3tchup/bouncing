@@ -14,17 +14,73 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <https://www.gnu.org/licenses/>. */
 
+#include <limits.h>
 #include <string.h>
+
+#include <getopt.h>
 
 #include "animation.h"
 
 
-int main() {
+#define USAGE_FMT "Usage: %s [-d delay] [-h] [-q]\n"
+#define HELP_MSG USAGE_FMT "\n"                           \
+    "Options:\n"                                          \
+    "  -d delay  Seconds between each frame refresh.\n"   \
+    "  -h        Display this help message.\n"            \
+    "  -q        Do not display an informative message\n" \
+    "            before the animation.\n"                 \
+    "  -v        Display program version information.\n"
+#define PROGRAM_VERSION "0.1.0"
+#define VERSION_MSG "bouncing v." PROGRAM_VERSION "\n"                \
+    "Copyright (C) 2023 Williams Ochoa\n"                             \
+    "This program comes with ABSOLUTELY NO WARRANTY.\n"               \
+    "This is free software, and you are welcome to redistribute it\n" \
+    "under certain conditions; see LICENSE for details.\n"
+
+int main(int argc, char *argv[]) {
+    int opt;
+    unsigned int delay = 1;
+    bool show_help = true;
+    while ((opt = getopt(argc, argv, "d:hqv")) != -1) {
+        switch (opt) {
+            unsigned long delay_tmp;
+            case 'd':
+                if ((delay_tmp = strtoul(optarg, NULL, 10)) == 0
+                    || delay_tmp > UINT_MAX) {
+                    fprintf(stderr, "Error: invalid delay value.\n");
+                    exit(EXIT_FAILURE);
+                }
+                delay = (unsigned int)delay_tmp;
+                break;
+            case 'h':
+                printf(HELP_MSG, *argv);
+                exit(EXIT_SUCCESS);
+                break;
+            case 'q':
+                show_help = false;
+                break;
+            case 'v':
+                printf(VERSION_MSG);
+                exit(EXIT_SUCCESS);
+                break;
+            default:
+                fprintf(stderr, USAGE_FMT, *argv);
+                exit(EXIT_FAILURE);
+                break;
+        }
+    }
+
     if (setup_tty() == -1) {
         fprintf(stderr, "Error: could not configure the terminal.\n");
         return EXIT_FAILURE;
     }
     srand(getpid());
+    printf(CHCUR(l) SWBUF(h) CLRSCR MOVCUR(1, 1));
+    if (show_help) {
+        printf("Press Ctrl+C to quit the program.");
+        fflush(stdout);
+        sleep(1);
+    }
 
     const char *logo[] = {
         "  DDDDDDDVVV       VVVDDDDDDD ",
@@ -40,13 +96,11 @@ int main() {
         "      V V  II D D E   O O     ",
         "       V   II DD  EEE OOO     "
     };
-    printf(CHCUR(l) SWBUF(h) CLRSCR MOVCUR(1, 1));
     if (animate_logo(logo, strlen(*logo),
-                     sizeof(logo) / sizeof(*logo), 1) == -1) {
+                     sizeof(logo) / sizeof(*logo), delay) == -1) {
         printf(CHCUR(h) MOVCUR(1, 1) CLRSCR SWBUF(l));
         fflush(stdout);
         fprintf(stderr, "Error: terminal size is too low.\n");
-        fflush(stderr);
         restore_tty();
     }
 
