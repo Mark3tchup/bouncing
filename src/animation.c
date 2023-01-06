@@ -76,6 +76,8 @@ void sigwinch_handler(int sig) {
 }
 
 #define RAND_DISP (rand() % 2 ? 1 : -1)
+#define START_POS(tmp_var, limit) \
+    2 + rand() % ((tmp_var = limit - 1) != 0 ? tmp_var : 2)
 
 /* Just start drawing the DVD logo endlessly.
    Return -1 on failure. */
@@ -83,16 +85,20 @@ int animate_logo(const char **logo, const int width, const int height,
                  const unsigned int delay) {
     struct winsize tty_size;
     signal(SIGWINCH, sigwinch_handler);
-    int x = 2 + rand() % (tty_size.ws_col - width - 1),
-        y = 2 + rand() % (tty_size.ws_row - height - 1),
-        dispx = RAND_DISP, dispy = RAND_DISP;
+    int x = 0, y = 0, dispx = RAND_DISP, dispy = RAND_DISP;
     for (must_resize = true;; x += dispx, y += dispy) {
         if (must_resize) {
             ioctl(STDIN_FILENO, TIOCGWINSZ, &tty_size);
-            if (tty_size.ws_col < width || tty_size.ws_row < height) {
+            if (tty_size.ws_col - 2 < width || tty_size.ws_row - 2 < height) {
                 return -1;
             }
             must_resize = false;
+        }
+        if (x == 0 || y == 0 || x + width > tty_size.ws_col + 1
+            || y + height > tty_size.ws_row + 1) {
+            int size_tmp;
+            x = START_POS(size_tmp, tty_size.ws_col - width);
+            y = START_POS(size_tmp, tty_size.ws_row - height);
         }
         printf(CLRSCR);
         for (int i = 0; i < height; ++i) {
@@ -103,7 +109,7 @@ int animate_logo(const char **logo, const int width, const int height,
         if (x == 1 || x + width == tty_size.ws_col + 1) {
             dispx = -dispx;
         }
-        if (y == 1 || y + height == tty_size.ws_row) {
+        if (y == 1 || y + height == tty_size.ws_row + 1) {
             dispy = -dispy;
         }
     }
