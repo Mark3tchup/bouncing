@@ -77,6 +77,7 @@ void sigwinch_handler(int sig) {
 #define RAND_DISP (rand() % 2 ? 1 : -1)
 #define START_POS(tmp_var, limit) \
     2 + rand() % ((tmp_var = limit - 1) != 0 ? tmp_var : 2)
+#define RAND_FG 31 + rand() % 7
 
 /* Just start drawing the DVD logo endlessly.
    Return -1 on failure. */
@@ -92,6 +93,7 @@ int animate_logo(const char **logo, const int width, const int height,
                 return -1;
             }
             must_resize = false;
+            printf(CHFMT(%d), RAND_FG);
         }
         if (x == 0 || y == 0 || x + width > tty_size.ws_col + 1
             || y + height > tty_size.ws_row + 1) {
@@ -107,9 +109,11 @@ int animate_logo(const char **logo, const int width, const int height,
         sleep(delay);
         if (x == 1 || x + width == tty_size.ws_col + 1) {
             dispx = -dispx;
+            printf(CHFMT(%d), RAND_FG);
         }
         if (y == 1 || y + height == tty_size.ws_row + 1) {
             dispy = -dispy;
+            printf(CHFMT(%d), RAND_FG);
         }
     }
 }

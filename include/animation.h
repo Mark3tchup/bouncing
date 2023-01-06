@@ -38,6 +38,8 @@ extern "C" {
 #define MOVCUR(x, y) CSI #y ";" #x "H"  /* Set the cursor position. */
 #define CHCUR(m) CSI "?25" #m           /* Change the cursor mode
                                            (h = enabled, l = disabled). */
+#define CHFMT(c) CSI #c "m"             /* Change the format of the screen
+                                           and text. */
 
 
 /* Configure the terminal to show the animation (and be restored if an
