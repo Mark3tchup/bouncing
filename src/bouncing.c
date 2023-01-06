@@ -14,12 +14,32 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <https://www.gnu.org/licenses/>. */
 
+#include <string.h>
+
 #include "animation.h"
 
 
 int main() {
-    setup_tty();
-    restore_tty();
+    if (setup_tty() == -1) {
+        fprintf(stderr, "Error: could not configure the terminal.\n");
+        return EXIT_FAILURE;
+    }
+    srand(getpid());
 
-    return 0;
+    const char *logo[] = {
+        "X   X DDD ",
+        " X X  D  D",
+        "  X   D  D",
+        " X X  D  D",
+        "X   X DDD "
+    };
+    printf(CHCUR(l) SWBUF(h) CLRSCR MOVCUR(1, 1));
+    if (animate_logo(logo, strlen(*logo),
+                     sizeof(logo) / sizeof(*logo), 1) == -1) {
+        printf(CHCUR(h) MOVCUR(1, 1) CLRSCR SWBUF(l));
+        fprintf(stderr, "Error: terminal size is too low.\n");
+        restore_tty();
+    }
+
+    return EXIT_FAILURE;
 }

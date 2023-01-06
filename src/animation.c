@@ -18,8 +18,8 @@
 
 #include <signal.h>
 
+#include <sys/ioctl.h>
 #include <termios.h>
-#include <unistd.h>
 
 #include "animation.h"
 
@@ -27,7 +27,17 @@
 /* Safely exit if an interrupt signal is received. */
 void sigint_handler(int sig) {
     restore_tty();
-    _Exit(sig == SIGINT ? 0 : sig);
+    /* Restore the screen format.
+       write() is signal-safe (according to the manpage 'signal-safety')
+       so let's use it instead of printf(). */
+    write(STDOUT_FILENO,
+          MOVCUR(1, 1)  /* 6 bytes. */
+          CLRSCR        /* 4 bytes. */
+          SWBUF(l)      /* 8 bytes. */
+          CHCUR(h),     /* 6 bytes. */
+          24);          /* 6 + 4 + 8 + 6 = 24 bytes. */
+    /* Unlike exit(), _Exit() is signal-safe :-) */
+    _Exit(sig == SIGINT ? EXIT_SUCCESS : sig);
 }
 
 
@@ -53,4 +63,36 @@ int restore_tty() {
     }
     tty.c_lflag ^= ECHO ^ ICANON;
     return tcsetattr(STDIN_FILENO, TCSANOW, &tty);
+}
+
+
+#define RAND_DISP (rand() % 2 ? 1 : -1)
+
+/* Just start drawing the DVD logo endlessly.
+   Return -1 on failure. */
+int animate_logo(const char **logo, const int width, const int height,
+                 const unsigned int delay) {
+    struct winsize tty_size;
+    ioctl(STDIN_FILENO, TIOCGWINSZ, &tty_size);
+
+    int x = 2 + rand() % (tty_size.ws_col - width - 1),
+        y = 2 + rand() % (tty_size.ws_row - height - 1),
+        dispx = RAND_DISP, dispy = RAND_DISP;
+    for (; tty_size.ws_col > width && tty_size.ws_row > width;
+         x += dispx, y += dispy) {
+        printf(CLRSCR);
+        for (int i = 0; i < height; ++i) {
+            printf(MOVCUR(%d, %d) "%s", y + i, x, logo[i]);
+        }
+        fflush(stdout);
+        sleep(delay);
+        if (x == 1 || x + width == tty_size.ws_col + 1) {
+            dispx = -dispx;
+        }
+        if (y == 1 || y + height == tty_size.ws_row) {
+            dispy = -dispy;
+        }
+    }
+
+    return -1;
 }

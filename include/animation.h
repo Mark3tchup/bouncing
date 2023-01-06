@@ -24,6 +24,21 @@ extern "C" {
 #endif
 
 
+#include <stdio.h>
+#include <stdlib.h>
+
+#include <unistd.h>
+
+
+#define CSI "\x1b["  /* Prefix for many virtual terminal commands. */
+#define SWBUF(m) CSI "?1049" #m         /* Switch to the specified buffer
+                                           (h = alternate, l = main). */
+#define CLRSCR CSI "2J"                 /* Clear the entire screen buffer. */
+#define MOVCUR(x, y) CSI #y ";" #x "H"  /* Set the cursor position. */
+#define CHCUR(m) CSI "?25" #m           /* Change the cursor mode
+                                           (h = enabled, l = disabled). */
+
+
 /* Configure the terminal to show the animation (and be restored if an
    interrupt signal is received).
    Return 0 (on success) or -1 (on failure). */
@@ -32,6 +47,12 @@ int setup_tty();
 /* Restore the terminal configuration to its initial state.
    Return 0 (on success) or -1 (on failure). */
 int restore_tty();
+
+
+/* Just start drawing the DVD logo endlessly.
+   Return -1 on failure. */
+int animate_logo(const char **logo, const int width, const int height,
+                 const unsigned int delay);
 
 
 #if __cplusplus
