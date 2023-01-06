@@ -31,11 +31,12 @@ void sigint_handler(int sig) {
        write() is signal-safe (according to the manpage 'signal-safety')
        so let's use it instead of printf(). */
     write(STDOUT_FILENO,
+          CHFMT(0)      /* 4 bytes. */
           MOVCUR(1, 1)  /* 6 bytes. */
           CLRSCR        /* 4 bytes. */
           SWBUF(l)      /* 8 bytes. */
           CHCUR(h),     /* 6 bytes. */
-          24);          /* 6 + 4 + 8 + 6 = 24 bytes. */
+          28);          /* 4 + 6 + 4 + 8 + 6 = 28 bytes. */
     /* Unlike exit(), _Exit() is signal-safe :-) */
     _Exit(sig == SIGINT ? EXIT_SUCCESS : sig);
 }

@@ -22,35 +22,35 @@
 #include "animation.h"
 
 
-#define USAGE_FMT "Usage: %s [-d delay] [-h] [-q]\n"
+#define USAGE_FMT "Usage: %s [-d delay] [-h] [-q] [-v]\n"
 #define HELP_MSG USAGE_FMT "\n"                           \
     "Options:\n"                                          \
-    "  -d delay  Seconds between each frame refresh.\n"   \
+    "  -d delay  Seconds between each frame refresh\n"    \
+    "            (one by default).\n"                     \
     "  -h        Display this help message.\n"            \
     "  -q        Do not display an informative message\n" \
     "            before the animation.\n"                 \
     "  -v        Display program version information.\n"
 #define PROGRAM_VERSION "0.1.0"
-#define VERSION_MSG "bouncing v." PROGRAM_VERSION "\n"                \
+#define VERSION_MSG "bouncing v" PROGRAM_VERSION "\n"                 \
     "Copyright (C) 2023 Williams Ochoa\n"                             \
     "This program comes with ABSOLUTELY NO WARRANTY.\n"               \
     "This is free software, and you are welcome to redistribute it\n" \
     "under certain conditions; see LICENSE for details.\n"
 
 int main(int argc, char *argv[]) {
-    int opt;
-    unsigned int delay = 1;
+    /* Parse the arguments passed through the CLI. */
+    unsigned long delay = 1;
     bool show_help = true;
+    int opt;
     while ((opt = getopt(argc, argv, "d:hqv")) != -1) {
         switch (opt) {
-            unsigned long delay_tmp;
             case 'd':
-                if ((delay_tmp = strtoul(optarg, NULL, 10)) == 0
-                    || delay_tmp > UINT_MAX) {
-                    fprintf(stderr, "Error: invalid delay value.\n");
+                if ((delay = strtoul(optarg, NULL, 10)) == 0
+                    || delay > UINT_MAX) {
+                    fprintf(stderr, "%s: invalid delay value\n", *argv);
                     exit(EXIT_FAILURE);
                 }
-                delay = (unsigned int)delay_tmp;
                 break;
             case 'h':
                 printf(HELP_MSG, *argv);
@@ -69,9 +69,14 @@ int main(int argc, char *argv[]) {
                 break;
         }
     }
+    if (optind < argc) {
+        fprintf(stderr, "%s: non-expected positional argument(s)\n" USAGE_FMT,
+                *argv, *argv);
+        return EXIT_FAILURE;
+    }
 
     if (setup_tty() == -1) {
-        fprintf(stderr, "Error: could not configure the terminal.\n");
+        fprintf(stderr, "%s: could not configure the terminal\n", *argv);
         return EXIT_FAILURE;
     }
     srand(getpid());
@@ -96,12 +101,12 @@ int main(int argc, char *argv[]) {
         "      V V  II D D E   O O     ",
         "       V   II DD  EEE OOO     "
     };
-    if (animate_logo(logo, strlen(*logo),
-                     sizeof(logo) / sizeof(*logo), delay) == -1) {
-        printf(CHCUR(h) MOVCUR(1, 1) CLRSCR SWBUF(l));
-        fflush(stdout);
-        fprintf(stderr, "Error: terminal size is too low.\n");
+    if (animate_logo(logo, strlen(*logo), sizeof(logo) / sizeof(*logo),
+                     (unsigned int)delay) == -1) {
+        printf(CHFMT(0) CHCUR(h) MOVCUR(1, 1) CLRSCR SWBUF(l));
         restore_tty();
+        fflush(stdout);
+        fprintf(stderr, "%s: terminal size is too low\n", *argv);
     }
 
     return EXIT_FAILURE;
