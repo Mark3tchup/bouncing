@@ -27,11 +27,18 @@ int main() {
     srand(getpid());
 
     const char *logo[] = {
-        "X   X DDD ",
-        " X X  D  D",
-        "  X   D  D",
-        " X X  D  D",
-        "X   X DDD "
+        "  DDDDDDDVVV       VVVDDDDDDD ",
+        " DDDDDDDDDVVV     VVVDDDDDDDDD",
+        "      DDDDVVV     VVV     DDDD",
+        " DDD   DDDVVV     VVVDDD   DDD",
+        " DDD   DDD VVV   VVV DDD   DDD",
+        "DDD   DDD   VVV VVV DDD   DDD ",
+        "DDDDDDDD     VVVVV  DDDDDDDD  ",
+        "DDDDDD        VVV   DDDDDD    ",
+        "               V              ",
+        "     V   V II DD  EEE OOO     ",
+        "      V V  II D D E   O O     ",
+        "       V   II DD  EEE OOO     "
     };
     printf(CHCUR(l) SWBUF(h) CLRSCR MOVCUR(1, 1));
     if (animate_logo(logo, strlen(*logo),
