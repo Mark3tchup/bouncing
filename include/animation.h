@@ -45,11 +45,11 @@ extern "C" {
 /* Configure the terminal to show the animation (and be restored if an
    interrupt signal is received).
    Return 0 (on success) or -1 (on failure). */
-int setup_tty();
+int setup_tty(void);
 
 /* Restore the terminal configuration to its initial state.
    Return 0 (on success) or -1 (on failure). */
-int restore_tty();
+int restore_tty(void);
 
 
 /* Just start drawing the DVD logo endlessly.

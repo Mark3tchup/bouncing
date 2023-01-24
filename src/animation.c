@@ -45,7 +45,7 @@ void sigint_handler(int sig) {
 /* Configure the terminal to show the animation (and be restored if an
    interrupt signal is received).
    Return 0 (on success) or -1 (on failure). */
-int setup_tty() {
+int setup_tty(void) {
     struct termios tty;
     if (tcgetattr(STDIN_FILENO, &tty) == -1
         || signal(SIGINT, sigint_handler) == SIG_ERR) {
@@ -57,7 +57,7 @@ int setup_tty() {
 
 /* Restore the terminal configuration to its initial state.
    Return 0 (on success) or -1 (on failure). */
-int restore_tty() {
+int restore_tty(void) {
     struct termios tty;
     if (tcgetattr(STDIN_FILENO, &tty)) {
         return -1;
